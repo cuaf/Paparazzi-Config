@@ -1,0 +1,493 @@
+<!DOCTYPE airframe SYSTEM "../airframe.dtd">
+<!-- Discovery F4 for normal plane, with DROTEK 10Dof IMU -->
+
+<airframe name="HB_DiscoveryFixed">
+
+ <firmware name="fixedwing">
+      <target name="ap" board="stm32f4_discovery">
+	<configure name="PERIODIC_FREQUENCY" value="120"/>
+	<configure name="AHRS_PROPAGATE_FREQUENCY" value="100"/>
+	<configure name="AHRS_CORRECT_FREQUENCY" value="100"/>
+	<define name="AHRS_TRIGGERED_ATTITUDE_LOOP"/>
+     </target>
+      <target name="sim" board="pc"/>
+
+
+<!--#######################################################################################-->
+<!--##############################   GLOBAL DEFINITIONS   #################################-->
+<!--#######################################################################################-->
+
+      <!-- Adding sections based on config files from TU Delft -->
+       <define name="USE_MAGNETOMETER" value="FALSE"/>
+      <!--  "configure" pass the definition in the makefile -->
+      <configure name="SYS_TIME_LED" value="3"/>
+      <!--  "define" pass the definition in the C preprocessor -->
+
+      <define name="USE_LED_3"/>
+      <define name="USE_LED_4"/>
+      <define name="USE_LED_5"/>
+      <define name="USE_LED_6"/>
+      <define name="USE_ADC_1" value="1"/>
+      <define name="USE_ADC_2" value="1"/>
+      <define name="USE_ADC_3" value="1"/>
+      <define name="USE_ADC_4" value="1"/>
+      <define name="AGR_CLIMB"/>
+      <define name="WIND_INFO"/>
+      <define name="WIND_INFO_RET"/>
+      <define name="STRONG_WIND"/>
+<!-- this ALT_KALMAN settings is no longer valid, trying to find a new setting-->
+      <!--define name="ALT_KALMAN"/-->
+      <define name="USE_I2C"/>
+      <define name="USE_I2C2"/>
+
+      <!--I2C1 and 3 are brought out on the daughterboard headers, we can use it for external sensors, if we want -->
+      <define name="USE_I2C1"/>
+
+      <define name="SENSOR_SYNC_SEND"/> 
+      <define name="USE_AHRS_GPS_ACCELERATIONS"/>
+      <define name="USE_GROUNDSPEED_CONTROL"/>
+      <configure name="PERIODIC_FREQUENCY" value="120"/>
+      <configure name="AHRS_PROPAGATE_FREQUENCY" value="100"/>
+      <configure name="AHRS_CORRECT_FREQUENCY" value="100"/>
+
+<!--      <define name="ADC_CHANNEL_VSUPPLY" value="ADC_1" />  -->
+<!--      <define name="MEASURE_AIRSPEED"/>  -->
+<!--      <define name="USE_AIRSPEED"/>  -->
+    <define name="USE_BAROMETER"/>  
+<!--      <define name="USE_INS_NAV_INIT" value=FALSE"/> --> <!--Set Home to flight plan coordinates -->
+
+<!--#######################################################################################-->
+<!--##############################     SUBSYSTEMS         #################################-->
+<!--#######################################################################################-->
+<!-- "define" goes to the C preprocessor, "configure" configures the makefile -->
+      <subsystem name="telemetry" type="transparent">
+
+      <configure name="MODEM_BAUD" value="57600"/>
+      <configure name="MODEM_PORT" value="UART2"/>
+<!--      <configure name="MODEM_LED"  value="5"/>  -->
+        </subsystem>
+        <subsystem name="gps" type="ublox">
+      <configure name="GPS_BAUD" value="B115200"/>
+      <configure name="GPS_PORT" value="UART4"/>
+      <configure name="GPS_LED" value="6"/>
+<!--      <configure name="GPS_LED"           value="none"/> -->
+        </subsystem>
+      <subsystem name="control" />
+      <subsystem name="radio_control" type="ppm"/>
+      <subsystem name="navigation" type="extra"/>
+<!--
+subsystems/imu/imu_drotek_10dof_v2.c:42:1: note: #pragma message: Config: Gyro/Accel output rate is 100Hz
+subsystems/imu/imu_drotek_10dof_v2.c:44:1: note: #pragma message: Config: DROTEK_2_SMPLRT_DIV = 9
+subsystems/imu/imu_drotek_10dof_v2.c:45:1: note: #pragma message: Config: DROTEK_2_LOWPASS_FILTER = MPU60X0_DLPF_42HZ
+subsystems/imu/imu_drotek_10dof_v2.c:50:1: note: #pragma message: Config: DROTEK_2_GYRO_RANGE = MPU60X0_GYRO_RANGE_1000
+subsystems/imu/imu_drotek_10dof_v2.c:55:1: note: #pragma message: Config: DROTEK_2_ACCEL_RANGE = MPU60X0_ACCEL_RANGE_8G
+subsystems/imu/imu_drotek_10dof_v2.c:60:1: note: #pragma message: Config: DROTEK_2_MPU_I2C_ADDR = 0xD2
+subsystems/imu/imu_drotek_10dof_v2.c:65:1: note: #pragma message: Config: DROTEK_2_HMC_I2C_ADDR = 0x3C
+-->   
+      <subsystem name="imu" type="drotek_10dof_v2">
+            <define name="DROTEK_2_MPU_I2C_ADDR" value="MPU60X0_ADDR_ALT" />
+            <define name="IMU_DROTEK_2_ORIENTATION_IC_UP" value="1" />
+      </subsystem>
+
+      <!-- Was originally int_cmpl_quat. Changing to  <subsystem name="ins" type="alt_float"/> -->
+        <!-- olri <subsystem name="ahrs" type="float_dcm"> -->
+        <subsystem name="ahrs" type="float_dcm">
+        </subsystem>
+      <subsystem name="ins" type="alt_float"/>
+<!--      <subsystem name="spi" type="master"/>  -->
+</firmware>
+
+
+<!--#######################################################################################-->
+<!--################################      MODULES         #################################-->
+<!--#######################################################################################-->
+ <modules>
+        <!-- baro_ms5611_i2c Alternate address -->
+      <load name="baro_ms5611_i2c.xml">
+            <define name="MS5611_I2C_DEV" value="i2c2" />
+            <define name="MS5611_SLAVE_ADDR=0xEE"/>
+            <define name="MS5611_SEND_BARO_ALTITUDE"/>
+            <!-- olri
+            <define name="SENSOR_SYNC_SEND"/>
+             olri -->
+      </load>
+
+    <load name="gps_ubx_ucenter.xml"/>
+
+    <!-- load name="temp_tmp102.xml"-->
+
+
+</modules>
+
+
+<!--#######################################################################################-->
+<!--#############################   SERVOS AND CONTROLS   #################################-->
+<!--#######################################################################################-->
+<!-- commands section -->
+<servos>
+      <servo name="AILERON" no="0" min="988" neutral="1500" max="2012"/>
+      <servo name="ELEVATOR" no="1" min="988" neutral="1500" max="2012"/>
+      <servo name="ENGINE" no="2" min="1060" neutral="1060" max="2012"/>
+<!--James has no idea how this stuff interacts right now, comment it out until the basics work. 
+      <servo name="FLAPS" no="3" min="988" neutral="988"  max="2012"/>
+      <servo name="ANT_PAN" no="4" min="950"      neutral="1485" max="2050"/>
+      <servo name="CAM_ZOOM" no="5" min="998"      neutral="1500" max="2012"/>
+      <servo name="CAM_PAN" no="6" min="970"      neutral="1500" max="2075"/>
+      <servo name="CAM_TILT" no="7" min="1040"      neutral="1500" max="1900"/>
+-->
+</servos>
+
+<commands>
+      <axis name="ROLL"       failsafe_value="0"/>
+      <axis name="PITCH"            failsafe_value="0"/>
+      <axis name="THROTTLE"         failsafe_value="0"/>
+<!--
+      <axis name="FLAPS"            failsafe_value="0"/>
+      <axis name="ANT_PAN"          failsafe_value="0"/>
+      <axis name="CAM_ZOOM"         failsafe_value="0"/>
+      <axis name="CAM_PAN"          failsafe_value="0"/>
+      <axis name="CAM_TILT"         failsafe_value="0"/>
+-->
+</commands>
+
+<rc_commands>
+      <set command="ROLL"            value="@ROLL"/>
+      <set command="PITCH"           value="@PITCH"/>
+      <set command="THROTTLE"        value="@THROTTLE"/>
+<!--
+      <set command="FLAPS"        value="@FLAPS"/>
+-->
+</rc_commands>
+
+  <section name="MIXER">
+<!--
+    <define name="FLAP_TO_ELEVATOR_MIX" value="-0.15"/>
+-->
+  </section>
+
+  <command_laws>
+<!-- this is probably useful, but I want to avoid flaps now, as they break the compile
+    <let var="elevator"  value="(@PITCH + (@FLAPS * FLAP_TO_ELEVATOR_MIX))"/>
+-->
+    <set servo="ENGINE"                value="@THROTTLE"/>
+    <set servo="AILERON"         value="@ROLL"/>
+<!--
+    <set servo="ELEVATOR"        value="$elevator"/>
+-->
+    <set servo="ELEVATOR"        value="@PITCH"/>
+<!--
+    <set servo="ANT_PAN"         value="@ANT_PAN"/>
+    <set servo="FLAPS"                 value="@FLAPS"/>
+    <set servo="CAM_ZOOM"        value="@CAM_ZOOM"/>
+    <set servo="CAM_PAN"         value="@CAM_PAN"/>
+    <set servo="CAM_TILT"        value="@CAM_TILT"/>
+-->
+  </command_laws>
+
+<!-- EMPTY "auto_rc_commands" block means NO RC RUDDER CONTROL IN AUTO2 AND AUTO1 -->
+ <auto_rc_commands>
+<!--  <set command="YAW" value="@YAW"/> -->
+ </auto_rc_commands>
+
+
+<ap_only_commands>
+<!-- James - Presumably this is how you get the autopilot to continuously point an antenna back to base. 
+      <copy command="ANT_PAN"/>
+-->
+</ap_only_commands>
+
+
+<!--#######################################################################################-->
+<!--#################################    I M U SETUP      #################################-->
+<!--#######################################################################################-->
+
+<!-- Normalized Local magnetic field obtained from http://www.ngdc.noaa.gov/geomag-web/#igrfwmm -->
+<!-- Magnetic field intensity / total field strength -->
+<!-- Calculated for PIRAEUS HELLAS 31 MAY 2013 declination = 3.59 degrees, 5.9 deg/year-->
+<section name="AHRS" prefix="AHRS_" >
+    <define name="H_X" value="(26536.9/45821.6)" />
+    <define name="H_Y" value="(1850.1/45821.6)" />
+    <define name="H_Z" value="(37309.3/45821.6) " />
+    <define name="MAG_DECLINATION" value="(RadOfDeg(4))" />
+</section>
+
+<section name="IMU" prefix="IMU_">
+    <define name="GYRO_P_SIGN" value="1"/>
+    <define name="GYRO_Q_SIGN" value="1"/>
+    <define name="GYRO_R_SIGN" value="1"/>
+
+    <define name="ACCEL_X_SIGN" value="1"/>
+    <define name="ACCEL_Y_SIGN" value="1"/>
+    <define name="ACCEL_Z_SIGN" value="1"/>
+    
+    <define name="MAG_X_SIGN" value="1"/>
+    <define name="MAG_Y_SIGN" value="1"/>
+    <define name="MAG_Z_SIGN" value="1"/>
+
+    <define name="GYRO_P_Q" value="0."/>
+    <define name="GYRO_P_R" value="0."/>
+    <define name="GYRO_Q_P" value="0."/>
+    <define name="GYRO_Q_R" value="0."/>
+    <define name="GYRO_R_P" value="0."/>
+    <define name="GYRO_R_Q" value="0."/>
+
+    <!-- Found with calibrate.py script and visual observation of the RAW values -->
+<!--
+    <define name="ACCEL_X_NEUTRAL" value="-223"/>
+    <define name="ACCEL_Y_NEUTRAL" value="-704"/>
+    <define name="ACCEL_Z_NEUTRAL" value="-40"/>
+-->
+
+
+     <define name="GYRO_P_NEUTRAL" value="5" />
+    <define name="GYRO_Q_NEUTRAL" value="25" />
+    <define name="GYRO_R_NEUTRAL" value="12" />
+
+<!-- SENS = 2048 LSB/g / 9.81 ms2/g = 208.766564729 LSB/ms2 / 10bit FRAC: 1024 / 208.7665 -->
+    <!-- Found with calibrate.py script -->
+    <define name="ACCEL_X_NEUTRAL" value="8"/>
+    <define name="ACCEL_Y_NEUTRAL" value="25"/>
+    <define name="ACCEL_Z_NEUTRAL" value="-55"/>
+    <define name="ACCEL_X_SENS" value="2.46169818688" integer="16"/>
+    <define name="ACCEL_Y_SENS" value="2.4400141151" integer="16"/>
+    <define name="ACCEL_Z_SENS" value="2.42446843209" integer="16"/>
+
+    <define name="BODY_TO_IMU_PHI"   value="9.7" unit="deg"/>
+    <define name="BODY_TO_IMU_THETA" value="-2.4" unit="deg"/>
+    <define name="BODY_TO_IMU_PSI"   value="0." unit="deg"/>
+
+
+    <!-- Found with calibrate.py script -->
+    <define name="MAG_X_NEUTRAL" value="73"/>
+    <define name="MAG_Y_NEUTRAL" value="118"/>
+    <define name="MAG_Z_NEUTRAL" value="169"/>
+
+    <define name="MAG_X_SENS" value="4.25741044617" integer="16"/>
+    <define name="MAG_Y_SENS" value="4.26451705702" integer="16"/>
+    <define name="MAG_Z_SENS" value="4.87790997442" integer="16"/>
+
+</section>
+
+<!--#######################################################################################-->
+<!--##################   AIRCRAFT ATTITUDE TRIMMING AND AUTO1 LIMITS  #####################-->
+<!--#######################################################################################-->
+<section name="INS" prefix="INS_">
+      <define name="ROLL_NEUTRAL_DEFAULT" value="RadOfDeg(0.)" unit="radians"/>
+      <define name="PITCH_NEUTRAL_DEFAULT" value="RadOfDeg(0.)" unit="radians"/>
+</section>
+
+<section name="AUTO1" prefix="AUTO1_">
+      <define name="MAX_ROLL" value="40" unit="deg"/>
+      <define name="MAX_PITCH" value="30" unit="deg"/>
+</section>
+
+
+<!--#######################################################################################-->
+<!--#########################   AIRCRAFT  VERTICAL CONTROL SETUP   ########################-->
+<!--#######################################################################################-->
+<section name="VERTICAL CONTROL" prefix="V_CTL_">
+                    <!-- OUTER LOOP PARAMETERS  -->
+<!-- The below definition affect the throttle percentage shown on the GCS. -->
+      <define name="POWER_CTL_BAT_NOMINAL" value="12.6" unit="volt"/>
+    <!-- outer loop ALTITUDE proportional gain -->
+      <define name="ALTITUDE_PGAIN" value="0.07" unit="(m/s)/m"/>
+    <!-- outer loop ALTITUDE LIMIT (saturation) -->
+      <define name="ALTITUDE_MAX_CLIMB" value="3" unit="m/s"/>
+    <!-- outer loop AIRSPEED proportional gain -->
+      <define name="AIRSPEED_PGAIN"      value="0.2"/>
+
+                   <!-- INNER LOOP PARAMETERS -->
+        <!-- The below definitions are used almost always -->
+      <define name="AUTO_THROTTLE_NOMINAL_CRUISE_THROTTLE"      value="0.50" unit="%"/>
+      <define name="AUTO_THROTTLE_MIN_CRUISE_THROTTLE"      value="0.40" unit="%"/>
+      <define name="AUTO_THROTTLE_MAX_CRUISE_THROTTLE"      value="0.70" unit="%"/>
+      <define name="THROTTLE_SLEW_LIMITER"              value="0.6" unit="s"/>
+      <define name="AUTO_PITCH_MAX_PITCH"               value="RadOfDeg(20)"/>
+      <define name="AUTO_PITCH_MIN_PITCH"               value="RadOfDeg(-20)"/>
+      
+      <!-- Climb loop (throttle) -->
+      <define name="AUTO_THROTTLE_CLIMB_THROTTLE_INCREMENT"       value="0.1"  unit="%/(m/s)"/>
+      <define name="AUTO_THROTTLE_NOMINAL_CRUISE_PITCH"      value="0.0" unit="rad"/>
+
+      <define name="AUTO_THROTTLE_PGAIN"                value="0.008" unit="%/(m/s)"/>
+      <define name="AUTO_THROTTLE_IGAIN"                value="0.0"/>
+      <define name="AUTO_THROTTLE_DGAIN"                value="0.001"/>
+
+      <!-- Climb loop (pitch) -->
+        <!-- magnitude of elevator movement on altitude change -->
+      <define name="AUTO_THROTTLE_PITCH_OF_VZ_PGAIN"          value="0.15" unit="rad/(m/s)"/> <!-- 0.05 -->
+        <define name="AUTO_PITCH_PGAIN"                   value="0.04"/> <!--0.052-->
+        <define name="AUTO_PITCH_DGAIN"                   value="0.0"/>
+        <define name="AUTO_PITCH_IGAIN"                   value="0.01"/> <!--0.065-->
+
+      <!-- Loiter and Dash trimming -->
+      <define name="AUTO_THROTTLE_LOITER_TRIM"          value="0" unit="pprz_t"/>
+      <define name="AUTO_THROTTLE_DASH_TRIM"                  value="0" unit="pprz_t"/>
+      <define name="PITCH_LOITER_TRIM"                  value="0" unit="pprz_t"/>
+      <define name="PITCH_DASH_TRIM"                    value="0" unit="pprz_t"/>
+
+        <!-- The below definitions are used for the "energy" control loop -->
+      <define name="AUTO_THROTTLE_OF_AIRSPEED_PGAIN"          value="0" />
+      <define name="AUTO_THROTTLE_OF_AIRSPEED_IGAIN"          value="0.01" />
+      <define name="AUTO_PITCH_OF_AIRSPEED_PGAIN"             value="0" />
+      <define name="AUTO_PITCH_OF_AIRSPEED_IGAIN"             value="0" />
+      <define name="AUTO_PITCH_OF_AIRSPEED_DGAIN"             value="0" />
+
+      <define name="ENERGY_TOT_PGAIN"                   value="0.35" />
+      <define name="ENERGY_TOT_IGAIN"                   value="0.25" />
+      <define name="ENERGY_DIFF_PGAIN"                  value="0.30" />
+      <define name="ENERGY_DIFF_IGAIN"                  value="0.20" />
+      <define name="DESIRED_ACCELERATION"               value="0.3" />
+      <define name="MAX_ACCELERATION"                   value="0.5" />
+
+      <define name="AUTO_AIRSPEED_SETPOINT"             value="15." unit="m/s"/>
+
+      <define name="AUTO_GROUNDSPEED_SETPOINT"          value="15." unit="m/s"/>
+      <define name="AUTO_GROUNDSPEED_PGAIN"             value="0."/>
+      <define name="AUTO_GROUNDSPEED_IGAIN"             value="0"/>
+</section>
+
+<!--#######################################################################################-->
+<!--########################   AIRCRAFT HORIZONTAL CONTROL SETUP   ########################-->
+<!--#######################################################################################-->
+
+<section name="HORIZONTAL CONTROL" prefix="H_CTL_">
+      <define name="COURSE_PGAIN"                       value="0.8"/>
+<!--        <define name="COURSE_DGAIN"                       value="0.8"/> -->
+        <define name="COURSE_PRE_BANK_CORRECTION"         value="1."/>
+
+      <define name="PITCH_MAX_SETPOINT"                 value="20" unit="deg"/>
+      <define name="PITCH_MIN_SETPOINT"                 value="-20" unit="deg"/>
+      <define name="PITCH_PGAIN"                        value="8000."/>
+      <!-- The below two definitions only for stabilization adaptive -->
+      <define name="PITCH_DGAIN"                        value="6."/>
+      <define name="PITCH_IGAIN"                        value="100."/>
+
+      <define name="ROLL_MAX_SETPOINT"                  value="30" unit="deg"/>
+      <define name="ROLL_SLEW"                    value="0.1"/>
+      <define name="ROLL_ATTITUDE_GAIN"                 value="8000"/>
+      <define name="ROLL_RATE_GAIN"                     value="500."/>
+
+      <define name="PITCH_OF_ROLL"                      value="RadOfDeg(1.0)"/>
+      <define name="ELEVATOR_OF_ROLL"                   value="1000"/>
+      <define name="AILERON_OF_THROTTLE"                value="0.0"/>
+
+      <!-- The below definitions are used only for stabilization adaptive -->
+      <define name="PITCH_DGAIN"                        value="6."/>
+      <define name="PITCH_IGAIN"                        value="100."/>
+      <define name="ROLL_KFFA"                    value="0"/>
+      <define name="ROLL_KFFD"                    value="0"/>
+      <define name="PITCH_KFFA"                   value="0."/>
+      <define name="PITCH_KFFD"                   value="0."/>
+</section>
+
+
+<!--#######################################################################################-->
+<!--############################    AIRBORNE BATTERY SETUP    #############################-->
+<!--#######################################################################################-->
+<section name="BAT">
+      <define name="MILLIAMP_AT_FULL_THROTTLE"          value="5000"/>
+      <define name="BAT_CAPACITY"                       value="10000."/>
+      <define name="FUEL_RESERVE_SECONDS"               value="300" unit="s"/>
+      <define name="CATASTROPHIC_BAT_LEVEL"             value="8" unit="V"/>
+      <define name="CRITIC_BAT_LEVEL"                   value="9.3" unit="V"/>
+      <define name="LOW_BAT_LEVEL"                      value="10.5" unit="V"/>
+      <define name="MAX_BAT_LEVEL"                      value="12.6" unit="V"/>
+    <define name="VOLTAGE_ADC_SCALE" value="0.018864469"/>
+    <define name="VOLTAGE_OFFSET" value="0" unit="V"/>
+    <define name="VoltageOfAdc(adc)" value="(VOLTAGE_ADC_SCALE * adc + VOLTAGE_OFFSET)"/>
+  
+</section>
+
+<!--#######################################################################################-->
+<!--#############################    MISCELLANEOUS SETUP    ###############################-->
+<!--#######################################################################################-->
+
+<section name="MISC">
+      <define name="CLIMB_AIRSPEED"                     value="14." unit="m/s"/>
+      <define name="GLIDE_AIRSPEED"                     value="14." unit="m/s"/>
+      <define name="RACE_AIRSPEED"                      value="23." unit="m/s"/>
+      <define name="STALL_AIRSPEED"                     value="12." unit="m/s"/>
+      <define name="AIRSPEED_SETPOINT_SLEW"             value="1" unit="s"/> <!--default=1-->
+      <define name="NOMINAL_AIRSPEED"                   value="16" unit="m/s"/>
+        <define name="MINIMUM_AIRSPEED"                   value="14." unit="m/s"/>
+        <define name="MAXIMUM_AIRSPEED"                   value="26." unit="m/s"/>
+      <define name="CARROT"                             value="3." unit="s"/>
+      <define name="GLIDE_RATIO"                        value="7."/>
+      <define name="KILL_MODE_DISTANCE"                 value="(1.5*MAX_DIST_FROM_HOME)"/>
+      <define name="CONTROL_FREQUENCY"                  value="60" unit="Hz"/>
+      <define name="NO_XBEE_API_INIT"                   value="TRUE"/>
+
+      <!-- obsolete <define name="ALT_KALMAN_ENABLED"                 value="TRUE"/> -->
+
+      <define name="TRIGGER_DELAY"                      value="1."/>
+      <define name="DEFAULT_CIRCLE_RADIUS"              value="120."/>
+      <define name="MIN_CIRCLE_RADIUS"                  value="100."/>
+      <define name="UNLOCKED_HOME_MODE"                 value="TRUE"/>
+      <define name="RC_LOST_MODE"                       value="PPRZ_MODE_AUTO2"/>
+</section>
+
+<section name="AGGRESSIVE"       prefix="AGR_">
+      <define name="BLEND_START"                        value="40"/><!-- Altitude Error to Initiate Aggressive Climb CANNOT BE ZERO!!-->
+      <define name="BLEND_END"                    value="10"/><!-- Altitude Error to Blend Aggressive to Regular Climb Modes NOT ZERO!!-->
+      <define name="CLIMB_THROTTLE"                     value="1.0"/><!-- Gaz for Aggressive Climb -->
+      <define name="CLIMB_PITCH"                        value="RadOfDeg(20)"/><!-- Pitch for Aggressive Climb -->
+      <define name="DESCENT_THROTTLE"                   value="0.1"/><!-- Gaz for Aggressive Decent -->
+      <define name="DESCENT_PITCH"                      value="RadOfDeg(-20)"/><!-- Pitch for Aggressive Decent -->
+      <define name="CLIMB_NAV_RATIO"                    value="0.8"/><!-- Percent Navigation for Altitude Error Equal to Start Altitude -->
+      <define name="DESCENT_NAV_RATIO"                  value="1.0"/>
+</section>
+
+  <section name="NAV">
+    <define name="NAV_PITCH"        value="0."/>
+    <define name="NAV_GLIDE_PITCH_TRIM" value="0"/>
+    <define name="NAV_GROUND_SPEED_PGAIN" value="0.015"/>
+    <define name="NAV_FOLLOW_PGAIN" value="-0.05"/>
+  </section>
+
+  <section name="GLS_APPROACH" prefix="APP_">
+      <define name="ANGLE" value="5"/>
+      <define name="INTERCEPT_AF_TOD" value="10"/>
+      <define name="TARGET_SPEED" value="13"/>
+  </section>
+
+<section name="FAILSAFE" prefix="FAILSAFE_">
+      <define name="DELAY_WITHOUT_GPS"                  value="1" unit="s"/>
+          <define name="DEFAULT_THROTTLE"                   value="0.6" unit="%"/>
+          <define name="DEFAULT_ROLL"                       value="10" unit="deg"/>
+          <define name="DEFAULT_PITCH"                      value="1" unit="deg"/>
+      <define name="HOME_RADIUS"                        value="100" unit="m"/>
+      <define name="KILL_MODE_DISTANCE"                 value="(MAX_DIST_FROM_HOME*1.5)"/>
+</section>
+
+<section name="DATALINK" prefix="DATALINK_">
+      <define name="DEVICE_TYPE"                        value="PPRZ"/>
+      <define name="DEVICE_ADDRESS"                     value="...."/>
+ </section>
+
+  <section name="DIGITAL_CAMERA" prefix="DC_">
+    <define name="AUTOSHOOT_QUARTERSEC_PERIOD" value="8" unit="quarter_second"/>
+    <define name="AUTOSHOOT_METER_GRID" value="100" unit="meter"/>
+  </section>
+
+  <section name="GCS">
+    <define name="ALT_SHIFT_PLUS_PLUS" value="100"/>
+    <define name="ALT_SHIFT_PLUS" value="10"/>
+    <define name="ALT_SHIFT_MINUS" value="-10"/>
+    <define name="SPEECH_NAME" value="Cessna"/>
+  </section>
+
+  <section name="SIMU">
+    <define name="WEIGHT" value ="1."/>
+    <define name="YAW_RESPONSE_FACTOR" value =".9"/>   <!--default 1.-->
+    <define name="PITCH_RESPONSE_FACTOR" value ="1."/> <!--default 1.-->
+    <define name="ROLL_RESPONSE_FACTOR" value ="15."/> <!--default 15-->
+  </section>
+
+ <makefile>
+<!-- added this in an attempt to get GPS hitl working. Failed. People say it's not worth it?
+ ap.CFLAGS += -DHITL -UGPS_CONFIGURE -UUART0_BAUD -DUART0_BAUD=B57600
+ ap.CFLAGS+= -DGPS_USE_LATLONG
+-->
+ </makefile>
+</airframe>
