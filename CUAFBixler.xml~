@@ -40,9 +40,8 @@
       <define name="USE_I2C"/>
       <define name="USE_I2C2"/>
 
-      <!--I2C1 and 3 are brought out on the daughterboard headers, we can use it for external sensors, if we want -->
-      <define name="USE_I2C1"/>
-
+      <!--I2C1 and 3 are brought out on the daughterboard headers, we can use it for external sensors, if we want. I2C3 is blocked if we use PPM input, which we do. i2c2 is used internally for the clock for the built in microphone on the dev board. -->
+  
       <define name="SENSOR_SYNC_SEND"/> 
       <define name="USE_AHRS_GPS_ACCELERATIONS"/>
       <define name="USE_GROUNDSPEED_CONTROL"/>
@@ -73,7 +72,10 @@
 <!--      <configure name="GPS_LED"           value="none"/> -->
         </subsystem>
       <subsystem name="control" />
-      <subsystem name="radio_control" type="ppm"/>
+    <subsystem name="radio_control" type="ppm">
+        <configure name="RADIO_CONTROL_PPM_PIN" value="UART1_RX"/>
+	<!-- this info from http://docs.1bitsquared.com/wiki/Lisa/M#Using_a_PPM_receiver , may be specific to a different board, not ours. But a lot of config is shared. <configure name="RADIO_CONTROL_PPM_PIN" value="UART1_RX"/> -->
+    </subsystem>
       <subsystem name="navigation" type="extra"/>
 <!--
 subsystems/imu/imu_drotek_10dof_v2.c:42:1: note: #pragma message: Config: Gyro/Accel output rate is 100Hz
@@ -231,20 +233,19 @@ subsystems/imu/imu_drotek_10dof_v2.c:65:1: note: #pragma message: Config: DROTEK
     <define name="GYRO_R_P" value="0."/>
     <define name="GYRO_R_Q" value="0."/>
 
-    <!-- Found with calibrate.py script and visual observation of the RAW values -->
-<!--
+    <!-- Found with calibrate.py script and visual observation of the RAW values-->
+<!-- THESE ARE THE ORIGINALS FROM BEFORE I ALTERED ANYTHING. 
     <define name="ACCEL_X_NEUTRAL" value="-223"/>
     <define name="ACCEL_Y_NEUTRAL" value="-704"/>
     <define name="ACCEL_Z_NEUTRAL" value="-40"/>
--->
 
 
      <define name="GYRO_P_NEUTRAL" value="5" />
     <define name="GYRO_Q_NEUTRAL" value="25" />
     <define name="GYRO_R_NEUTRAL" value="12" />
 
-<!-- SENS = 2048 LSB/g / 9.81 ms2/g = 208.766564729 LSB/ms2 / 10bit FRAC: 1024 / 208.7665 -->
-    <!-- Found with calibrate.py script -->
+ SENS = 2048 LSB/g / 9.81 ms2/g = 208.766564729 LSB/ms2 / 10bit FRAC: 1024 / 208.7665
+     Found with calibrate.py script
     <define name="ACCEL_X_NEUTRAL" value="8"/>
     <define name="ACCEL_Y_NEUTRAL" value="25"/>
     <define name="ACCEL_Z_NEUTRAL" value="-55"/>
@@ -257,7 +258,7 @@ subsystems/imu/imu_drotek_10dof_v2.c:65:1: note: #pragma message: Config: DROTEK
     <define name="BODY_TO_IMU_PSI"   value="0." unit="deg"/>
 
 
-    <!-- Found with calibrate.py script -->
+     Found with calibrate.py script
     <define name="MAG_X_NEUTRAL" value="73"/>
     <define name="MAG_Y_NEUTRAL" value="118"/>
     <define name="MAG_Z_NEUTRAL" value="169"/>
@@ -265,6 +266,14 @@ subsystems/imu/imu_drotek_10dof_v2.c:65:1: note: #pragma message: Config: DROTEK
     <define name="MAG_X_SENS" value="4.25741044617" integer="16"/>
     <define name="MAG_Y_SENS" value="4.26451705702" integer="16"/>
     <define name="MAG_Z_SENS" value="4.87790997442" integer="16"/>
+-->
+
+<define name="ACCEL_X_NEUTRAL" value="40"/>
+<define name="ACCEL_Y_NEUTRAL" value="-42"/>
+<define name="ACCEL_Z_NEUTRAL" value="422"/>
+<define name="ACCEL_X_SENS" value="0.0187859901605" integer="16"/>
+<define name="ACCEL_Y_SENS" value="9.72136940039" integer="16"/>
+<define name="ACCEL_Z_SENS" value="2.27800911369" integer="16"/>
 
 </section>
 
@@ -474,7 +483,7 @@ subsystems/imu/imu_drotek_10dof_v2.c:65:1: note: #pragma message: Config: DROTEK
     <define name="ALT_SHIFT_PLUS_PLUS" value="100"/>
     <define name="ALT_SHIFT_PLUS" value="10"/>
     <define name="ALT_SHIFT_MINUS" value="-10"/>
-    <define name="SPEECH_NAME" value="Cessna"/>
+    <define name="SPEECH_NAME" value="Bixler"/>
   </section>
 
   <section name="SIMU">
