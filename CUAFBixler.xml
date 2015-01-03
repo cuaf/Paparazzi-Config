@@ -124,11 +124,19 @@ subsystems/imu/imu_drotek_10dof_v2.c:65:1: note: #pragma message: Config: DROTEK
 <!--#######################################################################################-->
 <!--#############################   SERVOS AND CONTROLS   #################################-->
 <!--#######################################################################################-->
-<!-- commands section -->
+<!-- commands section 
+The commands work in the following order, some are defined in another file, but this is for reference:
+
+ppm input > (radio.xml)> ppm_pulses[] >(radio.xml) > radio_control.values[] (rc_commands) > commands[] (command_laws,servos)> actuators_pwm_values[] ppm out
+-->
+
 <servos>
-      <servo name="AILERON" no="0" min="988" neutral="1500" max="2012"/>
+<!-- These servo names should match the output of the command laws section. The "no" is the number, i.e. the number of the servo connector on the board -->
+
+      <servo name="THROTTLE" no="0" min="988" neutral="1500" max="2012"/>
       <servo name="ELEVATOR" no="1" min="988" neutral="1500" max="2012"/>
-      <servo name="ENGINE" no="2" min="1060" neutral="1060" max="2012"/>
+      <servo name="AILERON_LEFT" no="2" min="1060" neutral="1060" max="2012"/>
+      <servo name="AILERON_RIGHT" no="3" min="1060" neutral="1060" max="2012"/>
 <!--James has no idea how this stuff interacts right now, comment it out until the basics work. 
       <servo name="FLAPS" no="3" min="988" neutral="988"  max="2012"/>
       <servo name="ANT_PAN" no="4" min="950"      neutral="1485" max="2050"/>
@@ -167,22 +175,26 @@ subsystems/imu/imu_drotek_10dof_v2.c:65:1: note: #pragma message: Config: DROTEK
   </section>
 
   <command_laws>
-<!-- this is probably useful, but I want to avoid flaps now, as they break the compile
-    <let var="elevator"  value="(@PITCH + (@FLAPS * FLAP_TO_ELEVATOR_MIX))"/>
--->
-    <set servo="ENGINE"                value="@THROTTLE"/>
-    <set servo="AILERON"         value="@ROLL"/>
-<!--
+	<!-- this is probably useful, but I want to avoid flaps now, as they break the compile
+    <let var="elevator"  value="(@PITCH + (@FLAPS * FLAP_TO_ELEVATOR_MIX))"/> -->
+    <set servo="THROTTLE"                value="@THROTTLE"/>
+
+    <!--set servo="AILERON"         value="@ROLL"/ -->
+
+    <set servo="AILERON_LEFT" value="@ROLL"/>
+    <set servo="AILERON_RIGHT" value="-@ROLL"/>
+
+	<!--
     <set servo="ELEVATOR"        value="$elevator"/>
--->
+	-->
     <set servo="ELEVATOR"        value="@PITCH"/>
-<!--
+	<!--
     <set servo="ANT_PAN"         value="@ANT_PAN"/>
     <set servo="FLAPS"                 value="@FLAPS"/>
     <set servo="CAM_ZOOM"        value="@CAM_ZOOM"/>
     <set servo="CAM_PAN"         value="@CAM_PAN"/>
     <set servo="CAM_TILT"        value="@CAM_TILT"/>
--->
+	-->
   </command_laws>
 
 <!-- EMPTY "auto_rc_commands" block means NO RC RUDDER CONTROL IN AUTO2 AND AUTO1 -->
@@ -429,10 +441,15 @@ subsystems/imu/imu_drotek_10dof_v2.c:65:1: note: #pragma message: Config: DROTEK
       <!-- obsolete <define name="ALT_KALMAN_ENABLED"                 value="TRUE"/> -->
 
       <define name="TRIGGER_DELAY"                      value="1."/>
-      <define name="DEFAULT_CIRCLE_RADIUS"              value="120."/>
-      <define name="MIN_CIRCLE_RADIUS"                  value="100."/>
+
+      <!--  default circle radius maps onto the NAV_RADIUS variable in our flight plans. It's the radius of the circle sections (arcs) that the plane flies to link waypoints together. Used to be 120. Halve it? -->
+
+      <define name="DEFAULT_CIRCLE_RADIUS"              value="60."/>
+
+      <!-- only for use when system is set up properly- 
       <define name="UNLOCKED_HOME_MODE"                 value="TRUE"/>
       <define name="RC_LOST_MODE"                       value="PPRZ_MODE_AUTO2"/>
+	-->
 </section>
 
 <section name="AGGRESSIVE"       prefix="AGR_">
