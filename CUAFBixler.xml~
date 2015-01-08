@@ -75,7 +75,7 @@
     <subsystem name="radio_control" type="ppm">
 	<!-- this info from http://docs.1bitsquared.com/wiki/Lisa/M#Using_a_PPM_receiver , may be specific to a different board, not ours. But a lot of config is shared. <configure name="RADIO_CONTROL_PPM_PIN" value="UART1_RX"/> -->
     </subsystem>
-      <subsystem name="navigation" type="extra"/>
+	<subsystem name="navigation"/>
 <!--
 subsystems/imu/imu_drotek_10dof_v2.c:42:1: note: #pragma message: Config: Gyro/Accel output rate is 100Hz
 subsystems/imu/imu_drotek_10dof_v2.c:44:1: note: #pragma message: Config: DROTEK_2_SMPLRT_DIV = 9
@@ -138,7 +138,8 @@ ppm input > (radio.xml)> ppm_pulses[] >(radio.xml) > radio_control.values[] (rc_
       <servo name="AILERON_LEFT" no="2" min="1060" neutral="1060" max="2012"/>
       <servo name="AILERON_RIGHT" no="3" min="1060" neutral="1060" max="2012"/>
       <servo name="RUDDER" no="4"  min="1060" neutral="1060" max="2012"/>
-<!--James has no idea how this stuff interacts right now, comment it out until the basics work. 
+
+<!--Comment it out until the basics work. 
       <servo name="FLAPS" no="3" min="988" neutral="988"  max="2012"/>
       <servo name="ANT_PAN" no="4" min="950"      neutral="1485" max="2050"/>
       <servo name="CAM_ZOOM" no="5" min="998"      neutral="1500" max="2012"/>
