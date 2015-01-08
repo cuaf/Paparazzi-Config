@@ -137,6 +137,7 @@ ppm input > (radio.xml)> ppm_pulses[] >(radio.xml) > radio_control.values[] (rc_
       <servo name="ELEVATOR" no="1" min="988" neutral="1500" max="2012"/>
       <servo name="AILERON_LEFT" no="2" min="1060" neutral="1060" max="2012"/>
       <servo name="AILERON_RIGHT" no="3" min="1060" neutral="1060" max="2012"/>
+      <servo name="RUDDER" no="4"  min="1060" neutral="1060" max="2012"/>
 <!--James has no idea how this stuff interacts right now, comment it out until the basics work. 
       <servo name="FLAPS" no="3" min="988" neutral="988"  max="2012"/>
       <servo name="ANT_PAN" no="4" min="950"      neutral="1485" max="2050"/>
@@ -150,6 +151,7 @@ ppm input > (radio.xml)> ppm_pulses[] >(radio.xml) > radio_control.values[] (rc_
       <axis name="ROLL"       failsafe_value="0"/>
       <axis name="PITCH"            failsafe_value="0"/>
       <axis name="THROTTLE"         failsafe_value="0"/>
+      <axis name="YAW"         failsafe_value="0"/>
 <!--
       <axis name="FLAPS"            failsafe_value="0"/>
       <axis name="ANT_PAN"          failsafe_value="0"/>
@@ -163,6 +165,7 @@ ppm input > (radio.xml)> ppm_pulses[] >(radio.xml) > radio_control.values[] (rc_
       <set command="ROLL"            value="@ROLL"/>
       <set command="PITCH"           value="@PITCH"/>
       <set command="THROTTLE"        value="@THROTTLE"/>
+     <set command="YAW"            value="@YAW"/>
 <!--
       <set command="FLAPS"        value="@FLAPS"/>
 -->
@@ -175,19 +178,20 @@ ppm input > (radio.xml)> ppm_pulses[] >(radio.xml) > radio_control.values[] (rc_
   </section>
 
   <command_laws>
-	<!-- this is probably useful, but I want to avoid flaps now, as they break the compile
-    <let var="elevator"  value="(@PITCH + (@FLAPS * FLAP_TO_ELEVATOR_MIX))"/> -->
+    <!-- this is probably useful, but I want to avoid flaps now, as they break the compile
+    <let var="elevator"  value="(@PITCH + (@FLAPS * FLAP_TO_ELEVATOR_MIX))"/> 
+    <set servo="ELEVATOR"        value="$elevator"/>
+-->
+
     <set servo="THROTTLE"                value="@THROTTLE"/>
 
     <!--set servo="AILERON"         value="@ROLL"/ -->
-
     <set servo="AILERON_LEFT" value="@ROLL"/>
     <set servo="AILERON_RIGHT" value="-@ROLL"/>
 
-	<!--
-    <set servo="ELEVATOR"        value="$elevator"/>
-	-->
-    <set servo="ELEVATOR"        value="@PITCH"/>
+    <set servo="RUDDER" value="@YAW"/>
+    <set servo="ELEVATOR" value="@PITCH"/>
+
 	<!--
     <set servo="ANT_PAN"         value="@ANT_PAN"/>
     <set servo="FLAPS"                 value="@FLAPS"/>
@@ -199,7 +203,7 @@ ppm input > (radio.xml)> ppm_pulses[] >(radio.xml) > radio_control.values[] (rc_
 
 <!-- EMPTY "auto_rc_commands" block means NO RC RUDDER CONTROL IN AUTO2 AND AUTO1 -->
  <auto_rc_commands>
-<!--  <set command="YAW" value="@YAW"/> -->
+  <set command="YAW" value="@YAW"/>
  </auto_rc_commands>
 
 
