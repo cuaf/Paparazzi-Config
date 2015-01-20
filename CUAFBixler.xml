@@ -120,6 +120,28 @@ subsystems/imu/imu_drotek_10dof_v2.c:65:1: note: #pragma message: Config: DROTEK
 
 </modules>
 
+  <section name="CATAPULT" prefix="NAV_CATAPULT_">
+
+<!-- If we are armed, wait until we detect acceleration >= the acceleration_threshold for 5 measurements at 
+the ?main module rate (seems to be 60Hz) = 1/12th of a second. Wonder if we can just throw the plane to trigger this?
+Once it's been chucked balistically for MOTOR_DELAY, then turn on motor to INITIAL THROTTLE (to avoid turning on motor while still on catapult). 
+Then it automatically creates a new waypoint 300m in front of itself, on the same heading it had when taking off, and climbs to it. 
+Neat. Supposedly....
+
+- Phase 1: Zero Roll, Climb Pitch, Zero Throttle
+- Phase 2: After detecting the Start Acceleration\n
+Zero Roll, Climb Pitch, Full Throttle
+- Phase 3: After getting the GPS heading (time based)\n
+Place climb 300m in front of us\n
+GoTo(climb)
+-->
+
+    <define name="MOTOR_DELAY" value="0.75" unit="seconds"/>
+    <define name="HEADING_DELAY" value="3.0" unit="seconds"/>
+    <define name="ACCELERATION_THRESHOLD" value="1.75"/>
+    <define name="INITIAL_PITCH" value="15.0" unit="deg"/>
+    <define name="INITIAL_THROTTLE" value="1.0"/>
+  </section>
 
 <!--#######################################################################################-->
 <!--#############################   SERVOS AND CONTROLS   #################################-->
@@ -136,7 +158,7 @@ ppm input > (radio.xml)> ppm_pulses[] >(radio.xml) > radio_control.values[] (rc_
       <servo name="THROTTLE" no="0" min="988" neutral="988" max="2012"/>
       <servo name="ELEVATOR" no="1" min="988" neutral="1500" max="2012"/>
       <servo name="AILERON_LEFT" no="2" min="1000" neutral="1500" max="2012"/>
-      <servo name="AILERON_RIGHT" no="3" min="1000" neutral="1500" max="2012"/>
+      <servo name="AILERON_RIGHT" no="3" min="2012" neutral="1500" max="1000"/>
       <servo name="RUDDER" no="4"  min="1000" neutral="1500" max="2012"/>
 
 <!--Comment it out until the basics work. 
@@ -186,7 +208,6 @@ ppm input > (radio.xml)> ppm_pulses[] >(radio.xml) > radio_control.values[] (rc_
 
     <set servo="THROTTLE"                value="@THROTTLE"/>
 
-    <!--set servo="AILERON"         value="@ROLL"/ -->
     <set servo="AILERON_LEFT" value="@ROLL"/>
     <set servo="AILERON_RIGHT" value="-@ROLL"/>
 
@@ -221,12 +242,12 @@ ppm input > (radio.xml)> ppm_pulses[] >(radio.xml) > radio_control.values[] (rc_
 
 <!-- Normalized Local magnetic field obtained from http://www.ngdc.noaa.gov/geomag-web/#igrfwmm -->
 <!-- Magnetic field intensity / total field strength -->
-<!-- Calculated for PIRAEUS HELLAS 31 MAY 2013 declination = 3.59 degrees, 5.9 deg/year-->
+<!-- Calculated for Greenwich UK declination. Need to calibrate according to http://wiki.paparazziuav.org/wiki/ImuCalibration-->
 <section name="AHRS" prefix="AHRS_" >
     <define name="H_X" value="(26536.9/45821.6)" />
     <define name="H_Y" value="(1850.1/45821.6)" />
     <define name="H_Z" value="(37309.3/45821.6) " />
-    <define name="MAG_DECLINATION" value="(RadOfDeg(4))" />
+    <define name="MAG_DECLINATION" value="(RadOfDeg(1))" />
 </section>
 
 <section name="IMU" prefix="IMU_">
@@ -443,8 +464,6 @@ ppm input > (radio.xml)> ppm_pulses[] >(radio.xml) > radio_control.values[] (rc_
       <define name="CONTROL_FREQUENCY"                  value="60" unit="Hz"/>
       <define name="NO_XBEE_API_INIT"                   value="TRUE"/>
 
-      <!-- obsolete <define name="ALT_KALMAN_ENABLED"                 value="TRUE"/> -->
-
       <define name="TRIGGER_DELAY"                      value="1."/>
 
       <!--  default circle radius maps onto the NAV_RADIUS variable in our flight plans. It's the radius of the circle sections (arcs) that the plane flies to link waypoints together. Used to be 120. Halve it? -->
@@ -482,9 +501,9 @@ ppm input > (radio.xml)> ppm_pulses[] >(radio.xml) > radio_control.values[] (rc_
   </section>
 
 <section name="FAILSAFE" prefix="FAILSAFE_">
-      <define name="DELAY_WITHOUT_GPS"                  value="1" unit="s"/>
-          <define name="DEFAULT_THROTTLE"                   value="0.6" unit="%"/>
-          <define name="DEFAULT_ROLL"                       value="10" unit="deg"/>
+      <define name="DELAY_WITHOUT_GPS"                  value="3" unit="s"/>
+          <define name="DEFAULT_THROTTLE"                   value="0.3" unit="%"/>
+          <define name="DEFAULT_ROLL"                       value="15" unit="deg"/>
           <define name="DEFAULT_PITCH"                      value="1" unit="deg"/>
       <define name="HOME_RADIUS"                        value="100" unit="m"/>
       <define name="KILL_MODE_DISTANCE"                 value="(MAX_DIST_FROM_HOME*1.5)"/>
